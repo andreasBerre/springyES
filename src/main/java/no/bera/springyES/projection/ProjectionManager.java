@@ -9,11 +9,13 @@ import java.util.List;
 
 public class ProjectionManager extends UntypedActor {
     private final ActorRef eventStore;
-    private final ActorSystem system;
 
-    public ProjectionManager(ActorSystem system, ActorRef eventsStore, List<InitProjection> projections) {
+    public static Props mkProps(ActorRef eventStore, List<InitProjection> projections) {
+        return Props.create(ProjectionManager.class, eventStore, projections);
+    }
+
+    public ProjectionManager(ActorRef eventsStore, List<InitProjection> projections) {
         this.eventStore = eventsStore;
-        this.system = system;
         createProjections(projections);
     }
 
@@ -23,7 +25,7 @@ public class ProjectionManager extends UntypedActor {
     }
 
     private void createProjection(InitProjection initProjection) {
-        system.actorOf(Props.create(Projection.class, eventStore, initProjection.getAggregate(), initProjection.getProjectionBean()));
+        context().system().actorOf(Projection.mkProps(eventStore, initProjection.getAggregate(), initProjection.getProjectionBean()));
     }
 
     @Override
@@ -31,3 +33,4 @@ public class ProjectionManager extends UntypedActor {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 }
+

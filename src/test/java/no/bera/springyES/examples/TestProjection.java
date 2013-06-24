@@ -3,7 +3,7 @@ package no.bera.springyES.examples;
 
 import no.bera.springyES.Event;
 import no.bera.springyES.projection.annotations.Callable;
-import no.bera.springyES.projection.annotations.EventHandler;
+import no.bera.springyES.projection.annotations.Handler;
 import no.bera.springyES.projection.annotations.Projection;
 
 import java.util.ArrayList;
@@ -16,17 +16,17 @@ public class TestProjection {
     private List<Event> barEvents = new ArrayList<Event>();
     private List<Event> bazEvents = new ArrayList<Event>();
 
-    @EventHandler
+    @Handler
     public void handleEvent(FooEvent event){
         fooEvents.add(event);
     }
 
-    @EventHandler
+    @Handler
     public void handleEvent(BarEvent event){
         barEvents.add(event);
     }
 
-    @EventHandler
+    @Handler
     public void handleEvent(BazEvent event){
         bazEvents.add(event);
     }
