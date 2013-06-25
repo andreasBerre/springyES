@@ -1,8 +1,10 @@
-package no.bera.springyES.projection;
+package no.bera.springyES.init;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.Props;
+import no.bera.springyES.projection.InitProjection;
+import no.bera.springyES.projection.ProjectionManager;
+import no.bera.springyES.projection.annotations.Projection;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -22,17 +24,16 @@ public class ProjectionInitializer implements ApplicationContextAware, Initializ
     @Resource
     ActorRef eventStore;
 
-
     @Override
     public void afterPropertiesSet() throws Exception {
         System.out.println("Starting projection init");
-        final Map<String, Object> annotatedBeans = applicationContext.getBeansWithAnnotation(no.bera.springyES.projection.annotations.Projection.class);
+        final Map<String, Object> annotatedBeans = applicationContext.getBeansWithAnnotation(Projection.class);
 
         List<InitProjection> projections = new ArrayList<InitProjection>();
 
         for (final Object annotatedBean : annotatedBeans.values()) {
             final Class<?> projectionClass = annotatedBean.getClass();
-            final no.bera.springyES.projection.annotations.Projection annotation = projectionClass.getAnnotation(no.bera.springyES.projection.annotations.Projection.class);
+            final Projection annotation = projectionClass.getAnnotation(Projection.class);
             String aggregate = annotation.value();
             System.out.println("Found projection: " + projectionClass.getName() + ", with aggregate: " + aggregate);
 
@@ -43,9 +44,8 @@ public class ProjectionInitializer implements ApplicationContextAware, Initializ
     }
 
     private void createProjectionInitializer(List<InitProjection> projections) {
-        system.actorOf(Props.create(ProjectionManager.class, system, eventStore, projections));
+        system.actorOf(ProjectionManager.mkProps(eventStore, projections));
     }
-
 
     @Override
     public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {

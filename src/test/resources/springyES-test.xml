@@ -10,6 +10,7 @@
 
 	<context:annotation-config />
     <context:component-scan base-package="no.bera"/>
-    <bean id="appcontext" class="no.bera.springyES.projection.ProjectionInitializer"/>
+    <bean id="projectionInit" class="no.bera.springyES.init.ProjectionInitializer"/>
+    <bean id="commandHandlerInit" class="no.bera.springyES.init.CommandHandlerInitializer"/>
 
 </beans>

@@ -1,10 +1,12 @@
 package no.bera.springyES.projection;
 
 import akka.actor.ActorRef;
+import akka.actor.Props;
 import akka.actor.UntypedActor;
 import no.bera.springyES.Event;
 import no.bera.springyES.eventstore.Subscription;
-import no.bera.springyES.projection.annotations.EventHandler;
+import no.bera.springyES.projection.annotations.Handler;
+import no.bera.springyES.util.HandlerReflectionUtil;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -15,6 +17,10 @@ public class Projection extends UntypedActor{
     private ActorRef eventStore;
     private String aggregate;
     private Object projectionBean;
+
+    public static Props mkProps(ActorRef eventStore, String aggregate, Object projectionBean) {
+        return Props.create(Projection.class, eventStore, aggregate, projectionBean);
+    }
 
     public Projection(ActorRef eventStore, String aggregate, Object projectionBean) {
         this.eventStore = eventStore;
@@ -35,7 +41,7 @@ public class Projection extends UntypedActor{
     }
 
     private void delegateEvent(Event event) {
-        Method method = getHandelingMethod(event);
+        Method method = HandlerReflectionUtil.getHandelingMethod(Event.class, event.getClass(), projectionBean.getClass(), true);
         try {
             method.invoke(projectionBean, event);
         } catch (Exception e) {
@@ -43,42 +49,6 @@ public class Projection extends UntypedActor{
         }
     }
 
-    private Method getHandelingMethod(Event event) {
-        List<Method> methods = Arrays.asList( projectionBean.getClass().getMethods());
-
-        System.out.println("looking for handler");
-
-        Method handelingMethod = null;
-        Class<?> eventClass = event.getClass();
-
-        while (handelingMethod == null || !eventClass.isAssignableFrom(Event.class)){
-            handelingMethod = findAssignableMethod(methods, eventClass);
-            eventClass = eventClass.getSuperclass();
-        }
-
-        if (handelingMethod == null)
-            throw new NoEventHandlerFoundException("No handler of event " + event.getClass().getName() + " could be found in projection " + this.getClass().getName());
-        else
-            return handelingMethod;
-    }
-
-    private Method findAssignableMethod(List<Method> methods, Class<?> event) {
-        for (Method m : methods) {
-            if (m.isAnnotationPresent(EventHandler.class) && event.isAssignableFrom(getParam(m)))
-                    return m;
-        }
-        return null;
-    }
-
-    private Class<?> getParam(Method candidateMethod) {
-        List<Class<?>> paramClass = Arrays.asList(candidateMethod.getParameterTypes());
-
-        if (paramClass.size() > 1)
-            throw new RuntimeException("Handler " + candidateMethod.getName() + " has more than one parameter. A handler should have exactly one parameter.");
-        else if (paramClass.isEmpty())
-            throw new RuntimeException("Handler " + candidateMethod.getName() + " has no parameters. A handler should have exactly one parameter.");
-        return paramClass.get(0);
-    }
 
     private void sendSubscription() {
         eventStore.tell(new Subscription(aggregate), self());
