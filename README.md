@@ -1,3 +1,3 @@
 # SpringyES #
 
-A lightweight event sourcing framework using Akka and Journal.io.
+A Akka based event-sourcing framework using Spring for bean-managment and system configuration. Persistance through Journal.io.
